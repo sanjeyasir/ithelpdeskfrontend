@@ -1,19 +1,4 @@
-/**
-=========================================================
-* Material Dashboard 2 React - v2.2.0
-=========================================================
-
-* Product Page: https://www.creative-tim.com/product/material-dashboard-react
-* Copyright 2023 Creative Tim (https://www.creative-tim.com)
-
-Coded by www.creative-tim.com
-
- =========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-*/
-
-// react-router-dom components
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 // @mui material components
@@ -31,14 +16,64 @@ import CoverLayout from "layouts/authentication/components/CoverLayout";
 
 // Images
 import bgImage from "assets/images/bg-sign-up-cover.jpeg";
+import { toast } from "react-toastify";
+import APIService from "services/APIService";
 
 function Cover() {
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    agreeTerms: false
+  });
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? checked : value,
+    });
+
+    
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (!formData.agreeTerms) {
+        toast.error("You must agree to the terms and conditions.",{
+          position: "top-right",
+          theme: "colored", 
+          style:{fontSize:'12px'} 
+        })
+       
+        return;
+      }
+      
+      let reqBody=JSON.stringify(formData);
+      const data = await APIService.post('/users/addUser',reqBody);
+      if (data.status==201){
+          toast.success("Successful creation of data!",{
+            position: "top-right",
+            theme: "colored", 
+            style:{fontSize:'12px'} 
+          })
+      }
+
+      
+
+    } catch (error) {
+      console.error('Error during signup:', error);
+      
+    }
+  };
+
   return (
-    <CoverLayout image={bgImage}>
+    <div style={{ marginTop: '45px' }}>
       <Card>
         <MDBox
           variant="gradient"
-          bgColor="info"
+          bgColor="dark"
           borderRadius="lg"
           coloredShadow="success"
           mx={2}
@@ -51,66 +86,72 @@ function Cover() {
             Join us today
           </MDTypography>
           <MDTypography display="block" variant="button" color="white" my={1}>
-            Enter your email and password to register
+            Enter your username, email and password to register
           </MDTypography>
         </MDBox>
-        <MDBox pt={4} pb={3} px={3}>
-          <MDBox component="form" role="form">
+
+        <MDBox pt={3} pb={3} px={3}>
+          <form onSubmit={handleSubmit}>
             <MDBox mb={2}>
-              <MDInput type="text" label="Name" variant="standard" fullWidth />
+              <MDInput 
+                type="text" 
+                label="Username" 
+                fullWidth 
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+              />
             </MDBox>
             <MDBox mb={2}>
-              <MDInput type="email" label="Email" variant="standard" fullWidth />
+              <MDInput 
+                type="email" 
+                label="Email" 
+                fullWidth 
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+              />
             </MDBox>
             <MDBox mb={2}>
-              <MDInput type="password" label="Password" variant="standard" fullWidth />
+              <MDInput 
+                type="password" 
+                label="Password" 
+                fullWidth 
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+              />
             </MDBox>
             <MDBox display="flex" alignItems="center" ml={-1}>
-              <Checkbox />
+              <Checkbox
+                name="agreeTerms"
+                checked={formData.agreeTerms}
+                onChange={handleChange}
+              />
               <MDTypography
                 variant="button"
                 fontWeight="regular"
                 color="text"
-                sx={{ cursor: "pointer", userSelect: "none", ml: -1 }}
+                sx={{ cursor: "pointer", userSelect: "none", ml: 1 }}
               >
-                &nbsp;&nbsp;I agree the&nbsp;
-              </MDTypography>
-              <MDTypography
-                component="a"
-                href="#"
-                variant="button"
-                fontWeight="bold"
-                color="info"
-                textGradient
-              >
-                Terms and Conditions
+                I agree to the{" "}
+                <Link to="/authentication/terms-agreements" style={{ color: '#1a73e8' }}>
+                  Terms and Conditions
+                </Link>
               </MDTypography>
             </MDBox>
-            <MDBox mt={4} mb={1}>
-              <MDButton variant="gradient" color="info" fullWidth>
-                sign in
+            <MDBox mt={3} mb={1}>
+              <MDButton variant="gradient" color="dark" fullWidth type="submit">
+                Sign Up
               </MDButton>
             </MDBox>
-            <MDBox mt={3} mb={1} textAlign="center">
-              <MDTypography variant="button" color="text">
-                Already have an account?{" "}
-                <MDTypography
-                  component={Link}
-                  to="/authentication/sign-in"
-                  variant="button"
-                  color="info"
-                  fontWeight="medium"
-                  textGradient
-                >
-                  Sign In
-                </MDTypography>
-              </MDTypography>
-            </MDBox>
-          </MDBox>
+          </form>
         </MDBox>
+
       </Card>
-    </CoverLayout>
+    </div>
   );
 }
 
 export default Cover;
+

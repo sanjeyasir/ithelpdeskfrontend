@@ -40,7 +40,7 @@ function Master() {
 
   const [gridRows, setGridRows] = useState({
     gencode: [],
-    userrolecreation: [["u01", "John", "Admin", true], ["u02", "Jane", "Editor", false]],
+    userrolecreation: [],
     categorymapping: [["Electronics", "Tech"], ["Clothing", "Apparel"]],
   });
 
@@ -55,16 +55,17 @@ function Master() {
       ],
     },
     userrolecreation: {
-      columnHeaders: ["User ID", "Name", "Role", "Active"],
+      columnHeaders: ["id", "username", "email", "active","role"],
       columnConfig: [
         { data: 0, type: "text" },
         { data: 1, type: "text" },
-        {
-          data: 2,
-          type: "dropdown",
-          source: ["Admin", "Editor", "Viewer"],
-        },
+        { data: 2, type: "text" },
         { data: 3, type: "checkbox" },
+        {
+          data: 4,
+          type: "dropdown",
+          source: ["Admin", "Requester"],
+        },
       ],
     },
     categorymapping: {
@@ -98,8 +99,6 @@ function Master() {
     { label: "Edit", action: (row, rowData) => handleSubmitEdit(rowData) },
     { label: "Delete", action: (row, rowData) => handleSubmitDelete(rowData) },
   ];
-
-
 
   const { columnHeaders, columnConfig } = gridData[selectedTab];
   const rowData = gridRows[selectedTab];
@@ -201,6 +200,56 @@ function Master() {
     }
   };
 
+  const fetchUserMasterData = async () => {
+    try {
+      const data = await APIService.get('/users/getUsers'); // Replace with your actual endpoint
+
+      console.log("=>",data);
+
+      if(data.length!=0){
+
+        let masterData = data.map(m => [
+          m.id,
+          m.username,
+          m.email,
+          m.active,
+          m.role
+        ]);
+        
+
+        setGridRows((prev) => ({
+          ...prev,
+          userrolecreation: masterData,
+        }));
+        
+       
+        toast.success("Retrieved all master data from database!", {
+          position: "top-right",
+          theme: "colored", 
+          style:{fontSize:'12px'} 
+        });
+        
+
+      }else{
+        setGridRows((prev) => ({
+          ...prev,
+          userrolecreation:[],
+        }));
+
+        throw new Error("No data!")
+      }
+      
+      
+    } catch (error) {
+      toast.error(`Something went wrong retrieving master data:${error}!`,{
+        position: "top-right",
+        theme: "colored", 
+        style:{fontSize:'12px'} 
+      })
+      console.error("Error fetching master data:", error);
+    }
+  };
+
   const handleSubmitGenCode = async (e, category) => {
     try{
       e.preventDefault();
@@ -262,6 +311,37 @@ function Master() {
         await fetchGenCodeMasterData();
 
       }
+
+      if(selectedTab=="userrolecreation"){
+
+        let id= rowData[0];
+        let username= rowData[1];
+        let email=rowData[2];
+        let active=rowData[3]==true?1:0;
+        let role=rowData[4];
+        let reqBody = {
+          id:id,
+          username:username,
+          email:email,
+          active:active,
+          created_by:userId,
+          role:role,
+        };
+
+        let response= await APIService.post("/users/updateData", reqBody)
+
+
+        if (response.status==200){
+          toast.success("Successful update of data!",{
+            position: "top-right",
+            theme: "colored", 
+            style:{fontSize:'12px'} 
+          })
+        }
+        await fetchUserMasterData();
+        
+
+      }
       
 
     }catch(error){
@@ -298,6 +378,29 @@ function Master() {
         await fetchGenCodeMasterData();
 
       }
+
+      if(selectedTab=="userrolecreation"){
+
+        let id= rowData[0];
+        
+        let reqBody = {
+          id:id,
+        };
+
+        let response= await APIService.post("/users/deleteData", reqBody)
+
+
+        if (response.status==200){
+          toast.success("Successful delete of data!",{
+            position: "top-right",
+            theme: "colored", 
+            style:{fontSize:'12px'} 
+          })
+        }
+
+        await fetchUserMasterData();
+        
+      }
       
 
     }catch(error){
@@ -314,6 +417,7 @@ function Master() {
   useEffect(() => {
     fetchCategories();
     fetchGenCodeMasterData();
+    fetchUserMasterData();
   }, []);
 
   return (
@@ -406,13 +510,7 @@ function Master() {
 
           {selectedTab === "userrolecreation" && (
             <>
-            <form onSubmit={(e) => handleSubmit(e, "userrolecreation")}>
-              <input type="text" name="username" placeholder="Username" />
-              <input type="text" name="role" placeholder="Role" />
-              <button type="submit">Add User</button>
-              <button type="button" onClick={handleAddRow}>Add Row</button>
-             
-            </form>
+           
             <button onClick={handleFetchGridData}>Get Grid Data</button>
             </>
             

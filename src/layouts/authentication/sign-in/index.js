@@ -40,6 +40,7 @@ import BasicLayout from "layouts/authentication/components/BasicLayout";
 
 // Images
 import bgImage from "assets/images/helpdesk.png";
+import { toast } from "react-toastify";
 
 function Basic() {
   const [rememberMe, setRememberMe] = useState(false);
@@ -50,7 +51,17 @@ function Basic() {
 
   const handleSignIn = () => {
     // Add your sign-in logic here (optional validation, API calls, etc.)
-    navigate("/requester");
+    try{
+      navigate("/requester");
+
+    }catch(err){
+      toast.error('Something went wrng!')
+    }
+    
+  };
+
+  const handleSignUp = () => {
+    navigate("/authentication/sign-up");
   };
 
   
@@ -133,6 +144,21 @@ function Basic() {
             >
               Sign In
             </MDButton>
+          </MDBox>
+          <MDBox mt={4} mb={1}>
+
+          <MDTypography
+            variant="button" 
+            fontWeight="light" 
+            color="white"
+            opacity={0.8}
+            onClick={handleSignUp}
+            sx={{ cursor: "pointer", "&:hover": { textDecoration: "underline" }, color:"white"}}
+          >
+            🚀 Havent Join? <strong>Sign Up Now!</strong>
+          </MDTypography>
+
+           
           </MDBox>
         </MDBox>
       </MDBox>
